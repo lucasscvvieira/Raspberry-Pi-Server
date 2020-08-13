@@ -1,0 +1,6 @@
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: /certs/rasp-server.tk.pem
+        keyFile: /certs/rasp-server.tk.key

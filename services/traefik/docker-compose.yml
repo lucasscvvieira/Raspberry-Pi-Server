@@ -1,0 +1,68 @@
+version: "3"
+
+services:
+  traefik:
+    image: traefik:v2.2
+    container_name: traefik
+    restart: always
+    command:
+      #- --log.level=DEBUG
+      - --api=true
+      - --api.dashboard=true
+      #- --api.insecure=true
+      - --ping=true
+      - --ping.manualrouting=true
+      - --metrics.prometheus=true
+      - --metrics.prometheus.addEntryPointsLabels=true
+      - --metrics.prometheus.addServicesLabels=true
+      - --metrics.prometheus.manualrouting=true
+      - --providers.file.directory=/etc/traefik/dynamic
+      - --providers.docker=true
+      - --providers.docker.watch=true
+      - --providers.docker.exposedByDefault=false
+      - --providers.docker.network=traefik
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entryPoint.to=websecure
+      - --entrypoints.web.http.redirections.entryPoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --entrypoints.websecure.http.tls=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./dynamic:/etc/traefik/dynamic:ro
+      - ../../certs:/certs:ro
+      - ../../auth:/auth:ro
+    labels:
+      - traefik.enable=true
+
+      - traefik.http.routers.traefik-api.rule=Host(`traefik.rasp-server.tk`) && PathPrefix(`/api`)
+      - traefik.http.routers.traefik-api.service=api@internal
+      - traefik.http.routers.traefik-api.middlewares=adminBasicAuth@file,gzipCompression@file
+      - traefik.http.routers.traefik-api.entrypoints=websecure
+
+      - traefik.http.routers.traefik-dashboard.rule=Host(`traefik.rasp-server.tk`) && PathPrefix(`/`)
+      - traefik.http.routers.traefik-dashboard.service=dashboard@internal
+      - traefik.http.routers.traefik-dashboard.middlewares=adminBasicAuth@file,gzipCompression@file
+      - traefik.http.routers.traefik-dashboard.entrypoints=websecure
+
+      - traefik.http.routers.traefik-ping.rule=Host(`traefik.rasp-server.tk`) && PathPrefix(`/ping`)
+      - traefik.http.routers.traefik-ping.service=ping@internal
+      - traefik.http.routers.traefik-ping.entrypoints=websecure
+
+      - traefik.http.routers.traefik-prometheus.rule=Host(`traefik.rasp-server.tk`) && PathPrefix(`/metrics`)
+      - traefik.http.routers.traefik-prometheus.service=prometheus@internal
+      - traefik.http.routers.traefik-prometheus.middlewares=adminBasicAuth@file
+      - traefik.http.routers.traefik-prometheus.entrypoints=websecure
+    networks:
+      default: {}
+      traefik:
+        aliases:
+          - "registry.rasp-server.tk"
+          - "traefik.rasp-server.tk"
+          - "drone.rasp-server.tk"
+    ports:
+      - "80:80"
+      - "443:443"
+
+networks:
+  traefik:
+    external: true

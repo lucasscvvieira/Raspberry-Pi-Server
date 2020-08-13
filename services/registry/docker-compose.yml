@@ -1,0 +1,31 @@
+version: "3"
+
+services:
+  registry:
+    image: registry:2.7
+    container_name: registry
+    restart: always
+    networks:
+      - default
+      - traefik
+    volumes:
+      - ./config.yml:/etc/docker/registry/config.yml:ro
+      - ./data:/var/lib/registry
+    labels:
+      - traefik.enable=true
+
+      - traefik.http.routers.registry.rule=Host(`registry.rasp-server.tk`) && PathPrefix(`/v2`)
+      - traefik.http.routers.registry.service=registry-svc
+      - traefik.http.routers.registry.middlewares=usersBasicAuth@file
+      - traefik.http.routers.registry.entrypoints=websecure
+      - traefik.http.services.registry-svc.loadbalancer.server.port=5000
+
+      - traefik.http.routers.registry-prometheus.rule=Host(`registry.rasp-server.tk`) && PathPrefix(`/metrics`)
+      - traefik.http.routers.registry-prometheus.service=registry-prometheus-svc
+      - traefik.http.routers.registry-prometheus.middlewares=adminBasicAuth@file
+      - traefik.http.routers.registry-prometheus.entrypoints=websecure
+      - traefik.http.services.registry-prometheus-svc.loadbalancer.server.port=5001
+
+networks:
+  traefik:
+    external: true

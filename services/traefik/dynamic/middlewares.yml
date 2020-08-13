@@ -1,0 +1,12 @@
+http:
+  middlewares:
+    usersBasicAuth:
+      basicAuth:
+        usersFile: /auth/users
+
+    adminBasicAuth:
+      basicAuth:
+        usersFile: /auth/admin
+
+    gzipCompression:
+      compress: {}

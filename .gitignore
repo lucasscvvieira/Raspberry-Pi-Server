@@ -1,0 +1,13 @@
+# ignore config
+config
+
+# ignore certificates
+*.pem
+*.key
+*.crt
+
+# ignore users passwords
+auth/*
+
+# ignore persistent datas
+**/data/**

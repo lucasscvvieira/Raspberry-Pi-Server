@@ -1,0 +1,31 @@
+version: "3"
+
+services:
+  ipfs:
+    image: registry.rasp-server.tk/ipfs/go-ipfs:v0.6.0
+    container_name: ipfs
+    restart: always
+    environment:
+      - IPFS_PROFILE=lowpower,server
+    volumes:
+      - ./data:/data/ipfs
+      - ./fileIO:/fileIO
+    labels:
+      - traefik.enable=true
+
+      - traefik.http.routers.ipfs-gateway.rule=Host(`gateway.rasp-server.tk`)
+      - traefik.http.routers.ipfs-gateway.entrypoints=websecure
+      - traefik.http.routers.ipfs-gateway.service=ipfs-gateway-svc
+      - traefik.http.services.ipfs-gateway-svc.loadbalancer.server.port=8080
+
+      - traefik.http.routers.ipfs-webui.rule=Host(`ipfs.rasp-server.tk`)
+      - traefik.http.routers.ipfs-webui.entrypoints=websecure
+      - traefik.http.routers.ipfs-webui.service=ipfs-webui-svc
+      - traefik.http.services.ipfs-webui-svc.loadbalancer.server.port=5001
+    networks:
+      - default
+      - traefik
+
+networks:
+  traefik:
+    external: true
